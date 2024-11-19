@@ -65,25 +65,16 @@ notes_prompt = st.text_area("Notes Prompt", value="""Analyze the notes and extra
 Link the comments to the players using their numbers or names.""")
 
 # File uploader for multiple team sheet images
-uploaded_team_images = st.file_uploader("Upload team sheet images", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+uploaded_team_images = st.file_uploader("Upload team sheet images", type=["png", "jpg", "jpeg"], accept_multiple_files=False)
 
 # File uploader for notes
-uploaded_notes = st.file_uploader("Upload notes", type=["txt"], accept_multiple_files=False)
+uploaded_notes = st.file_uploader("Upload notes", type=["txt","png", "jpg", "jpeg"], accept_multiple_files=False)
 
 # Process button
 if st.button("Generate Summary") and uploaded_team_images and uploaded_notes:
     # Process team sheets
-    team_list = {}
     with st.spinner("Extracting team lists from images..."):
-        for i, team_image in enumerate(uploaded_team_images):
-            temp_image_path = f"temp_team_image_{i}.jpg"
-            with open(temp_image_path, "wb") as f:
-                f.write(team_image.read())
-            st.image(temp_image_path, caption=f"Uploaded Image {i + 1}", width=300)
-            team_response = extract_team_list(temp_image_path, team_prompt)
-            if team_response and 'message' in team_response:
-                extracted_team = json.loads(team_response['message']['content'])
-                team_list.update(extracted_team)
+
 
     # Process notes
     with st.spinner("Extracting notes..."):
