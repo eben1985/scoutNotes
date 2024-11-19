@@ -57,10 +57,10 @@ uploaded_image = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"]
 # Button to process the image
 if uploaded_image:
 
-    st.image("temp_image.jpg", caption="Uploaded Image",width=300)
+    st.image(uploaded_image, caption="Uploaded Image",width=300)
 
     with st.spinner("Extracting team list..."):
-        team_list = extract_team_list("temp_image.jpg", team_name, team_color,prompt)
+        team_list = extract_team_list(uploaded_image, team_name, team_color,prompt)
 
     if team_list:
         st.success("Extraction successful!")
