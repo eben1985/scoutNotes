@@ -73,7 +73,16 @@ uploaded_notes = st.file_uploader("Upload notes", type=["txt","png", "jpg", "jpe
 # Process button
 if st.button("Generate Summary") and uploaded_team_images and uploaded_notes:
     # Process team sheets
-    with st.spinner("Extracting team lists from images..."):
+    st.image("temp_image.jpg", caption="Uploaded Image",width=300)
+
+    with st.spinner("Extracting team list..."):
+        team_list = extract_team_list("temp_image.jpg", team_prompt)
+
+    if team_list:
+        st.success("Extraction successful!")
+        st.json(team_list)
+    else:
+        st.error("Failed to extract the team list.")
 
 
     # Process notes
