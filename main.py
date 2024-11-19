@@ -19,36 +19,35 @@ def extract_team_list(image_path, prompt):
     )
     return response
 
-def extract_notes(text_path, prompt):
+def extract_notes(image_path, prompt, team_list):
     """
     Extract comments or notes from the uploaded text file using the LLM.
     """
-    with open(text_path, "r") as file:
-        notes_content = file.read()
     response = ollama.chat(
         model='llama3.2-vision',
         messages=[
             {
                 'role': 'user',
-                'content': f"{prompt}\n\nNotes:\n{notes_content}"
+                'content': f"{prompt}\n\nTeam List:\n{team_list}",
+                'images': [image_path]
             }
         ]
     )
     return response
 
-def generate_summary(team_list, notes):
-    """
-    Generate a summary linking team list information to corresponding notes.
-    """
-    summary = []
-    for player_num, player_name in team_list.items():
-        player_notes = [note for note in notes if player_num in note or player_name in note]
-        summary.append({
-            "Player Number": player_num,
-            "Player Name": player_name,
-            "Comments": " ".join(player_notes) if player_notes else "No comments."
-        })
-    return summary
+# def generate_summary(team_list, notes):
+#     """
+#     Generate a summary linking team list information to corresponding notes.
+#     """
+#     summary = []
+#     for player_num, player_name in team_list.items():
+#         player_notes = [note for note in notes if player_num in note or player_name in note]
+#         summary.append({
+#             "Player Number": player_num,
+#             "Player Name": player_name,
+#             "Comments": " ".join(player_notes) if player_notes else "No comments."
+#         })
+#     return summary
 
 # Streamlit UI
 st.title("Enhanced Team List and Notes Analyzer")
@@ -61,8 +60,10 @@ Return the information as a JSON object with player numbers as keys and names as
 Do all the players on the image, do not stop until all the players on the image have been captured.
 There should be 23 players.""")
 
-notes_prompt = st.text_area("Notes Prompt", value="""Analyze the notes and extract any comments related to players.
-Link the comments to the players using their numbers or names.""")
+notes_prompt = st.text_area("Notes Prompt", value="""fAnalyze the notes and extract any comments related to players.
+Link the comments to the players using their numbers or names.
+make a list of the number of the player, the names and the comments. The notes contains fractions of player informatin 
+make sure that you link all the relevant information to the correct player by using this lis of player numbers and names in the teamliist.""")
 
 # File uploader for multiple team sheet images
 uploaded_team_images = st.file_uploader("Upload team sheet images", type=["png", "jpg", "jpeg"], accept_multiple_files=False)
@@ -73,10 +74,11 @@ uploaded_notes = st.file_uploader("Upload notes", type=["txt","png", "jpg", "jpe
 # Process button
 if st.button("Generate Summary") and uploaded_team_images and uploaded_notes:
     # Process team sheets
-    st.image("temp_image.jpg", caption="Uploaded Image",width=300)
+    st.image(uploaded_team_images, caption="Uploaded Image",width=300)
+    st.image(uploaded_notes, caption="Uploaded Image",width=300)
 
     with st.spinner("Extracting team list..."):
-        team_list = extract_team_list("temp_image.jpg", team_prompt)
+        team_list = extract_team_list(uploaded_team_images, team_prompt)
 
     if team_list:
         st.success("Extraction successful!")
@@ -87,22 +89,18 @@ if st.button("Generate Summary") and uploaded_team_images and uploaded_notes:
 
     # Process notes
     with st.spinner("Extracting notes..."):
-        notes_path = "temp_notes.txt"
-        with open(notes_path, "wb") as f:
-            f.write(uploaded_notes.read())
-        notes_response = extract_notes(notes_path, notes_prompt)
-        notes = []
-        if notes_response and 'message' in notes_response:
-            notes = notes_response['message']['content'].splitlines()
+        notes_response = extract_notes(uploaded_notes, notes_prompt, team_list)
+        st.write(notes_response)
 
-    # Generate summary
-    with st.spinner("Generating summary..."):
-        summary = generate_summary(team_list, notes)
-        st.success("Summary generated successfully!")
-        st.json(summary)
 
-    # Allow user to download the summary
-    summary_json = json.dumps(summary, indent=4)
-    st.download_button("Download Summary", data=summary_json, file_name="team_summary.json", mime="application/json")
-else:
-    st.info("Please upload both team sheets and notes before generating the summary.")
+    # # Generate summary
+    # with st.spinner("Generating summary..."):
+    #     summary = generate_summary(team_list, notes_response)
+    #     st.success("Summary generated successfully!")
+    #     st.json(summary)
+
+#     # Allow user to download the summary
+#     summary_json = json.dumps(summary, indent=4)
+#     st.download_button("Download Summary", data=summary_json, file_name="team_summary.json", mime="application/json")
+# else:
+#     st.info("Please upload both team sheets and notes before generating the summary.")
